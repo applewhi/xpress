@@ -1,6 +1,9 @@
 //table creation logic goes here
+const express = require('express');
+const app = express();
+
 const sqlite3 = require('sqlite3');
-const db = new sqlite.Database('./db.sqlite');
+const db = new sqlite3.Database('./db.sqlite');
 
 db.serialize(() => {
   db.run('DROP TABLE IF EXISTS Artist', error => {
