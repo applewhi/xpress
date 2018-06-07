@@ -17,25 +17,21 @@ app.get('/api/artists', (req, res, next) => {
 });
 
 app.param('artistId', (req, res, next, id) => {
-  if (Number(id))
-})
-
-//FIND ARTIST BY ID HELPER FUNCTION
-const getArtistById = function('artistId',statusCode){
-  db.get(`SELECT * FROM Artist WHERE Artist.id = $artistId`, {$artistId: artistID},
+  db.get(`SELECT * FROM Artist WHERE Artist.id = $artistId`, {$artistId: id},
     (error, row) => {
     if (error) {
       next(error)
-    } else if (row) {
-        res.status(statusCode);
-      } else {
-        res.status(404).send();
-      }
-    });
-}
+    } else if (!row) {
+        res.status(404).send()
+    } else {
+      req.artist = row;
+      next();
+    }
+});
 
 app.post('/api/artists/', (req, res, next) => {
   const artist = req.body.artist;
+
 
   if (!artist.name || !artist.date_of_birth || !artist.biography) {
     res.status(400).send();
@@ -50,9 +46,17 @@ app.post('/api/artists/', (req, res, next) => {
         if (error) {
           next(error);
         } else {
-            getArtistById(this.ID, 201);
-            res.send(row);
-            }
+          db.get(`SELECT * FROM Artist WHERE Artist.id = $artistId`, {$artistId: this.ID},
+            (error, row) => {
+              if (error) {
+                next(error)
+              } else if (row) {
+                res.status(201).send(row);
+              } else {
+                res.status(404).send();
+              }
+            });
+          }
           });
         }
     });
@@ -66,10 +70,13 @@ app.put('/api/artists/:artistId', (req, res, next) => {
   const artist = req.body.artist
   if (!artist.name || !artist.date_of_birth || !artist.biography) {
       res.status(400).send();
-  }
-  getArtistById(Number(req.params.id, 200))
-  db.run(`UPDATE Artist SET name = $name, date_of_birth = $dob, biography =
-  $bio, is_currently_employed = $isEmployed`,{
-    $name: res.body.artist.name
-  });
+  } else {
+    db.run(`UPDATE Artist SET name = $name, date_of_birth = $dob, biography =
+      $bio, is_currently_employed = $isEmployed`,{$name: res.body.artist.name},
+      err => {
+        if (err) {
+          next(err);
+        }
+      });
+    }
 });
